@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SuperMatch — cantadas com IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#1a0c12; --card:#26141b; --sec:#331c25; --border:#4a2a36; --fg:#f8eef1; --muted:#b89aa4;
+    --primary:#f0386b; --accent:#f4b860;
+    --fire:linear-gradient(120deg,#f4b860,#f0386b 45%,#d4097a);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Sora",system-ui,sans-serif;background:var(--bg);color:var(--fg);min-height:100dvh;
+    background-image:radial-gradient(60% 40% at 50% 0%,rgba(240,56,107,.35),transparent 70%),radial-gradient(40% 30% at 90% 30%,rgba(244,184,96,.15),transparent 70%);background-repeat:no-repeat}
+  .wrap{max-width:448px;margin:0 auto;padding:32px 16px 64px;display:flex;flex-direction:column;gap:20px}
+  header{text-align:center}
+  .badge{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--border);background:rgba(51,28,37,.6);padding:4px 12px;border-radius:999px;font-size:12px;font-weight:500}
+  h1{font-family:"Instrument Serif",serif;font-weight:400;font-size:48px;line-height:.95;margin-top:16px;letter-spacing:-.5px}
+  h1 em{background:var(--fire);-webkit-background-clip:text;background-clip:text;color:transparent}
+  header p{margin-top:12px;font-size:14px;color:var(--muted)}
+  .tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:4px}
+  .tabs button,.niveis button{font:inherit;cursor:pointer;border:none;background:none;color:var(--muted)}
+  .tabs button{padding:12px;border-radius:16px;font-weight:600;font-size:14px;transition:.2s}
+  .tabs button.on{background:var(--fire);color:#fff;box-shadow:0 10px 40px -10px rgba(240,56,107,.6)}
+  .drop{display:flex;flex-direction:column;align-items:center;gap:12px;padding:48px 24px;border:2px dashed rgba(240,56,107,.5);border-radius:28px;background:rgba(38,20,27,.6);cursor:pointer;text-align:center;color:var(--fg);font:inherit;width:100%}
+  .drop .ic{width:56px;height:56px;border-radius:18px;background:var(--fire);display:flex;align-items:center;justify-content:center;font-size:24px}
+  .drop b{font-weight:600}.drop small{font-size:12px;color:var(--muted)}
+  .preview{position:relative;border:1px solid var(--border);border-radius:28px;overflow:hidden;background:var(--card);display:none}
+  .preview img{width:100%;max-height:420px;object-fit:contain;display:block}
+  .pill{position:absolute;background:rgba(26,12,18,.8);backdrop-filter:blur(6px);color:var(--fg);border:none;border-radius:999px;font:inherit;font-size:12px;padding:6px 12px;cursor:pointer}
+  textarea{width:100%;resize:none;border:1px solid var(--border);background:var(--card);color:var(--fg);border-radius:18px;padding:12px 16px;font:inherit;font-size:14px;display:none}
+  .label{font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .niveis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .niveis button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px;border:1px solid var(--border);border-radius:18px;background:var(--card);font-weight:600;font-size:14px}
+  .niveis button span{font-size:20px}
+  .niveis button.on{border-color:var(--primary);background:rgba(240,56,107,.15);color:var(--fg)}
+  .gerar{height:56px;border:none;border-radius:18px;background:var(--fire);color:#fff;font:inherit;font-weight:600;font-size:16px;cursor:pointer;box-shadow:0 10px 40px -10px rgba(240,56,107,.6)}
+  .gerar:disabled{opacity:.6;cursor:wait}
+  .outras{height:44px;border:1px solid var(--border);border-radius:18px;background:var(--card);color:var(--fg);font:inherit;cursor:pointer}
+  #res{display:none;flex-direction:column;gap:12px}
+  .leitura{border:1px solid rgba(244,184,96,.4);background:rgba(244,184,96,.1);border-radius:18px;padding:16px}
+  .leitura .t{font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--accent)}
+  .leitura p{margin-top:4px;font-size:14px;line-height:1.6}
+  .msg{position:relative;background:var(--card);border:1px solid var(--border);border-radius:28px 28px 6px 28px;padding:16px 48px 16px 16px;animation:rise .5s both}
+  .msg .e{font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--primary)}
+  .msg p{margin-top:4px;font-size:15px;line-height:1.6}
+  .msg button{position:absolute;right:12px;top:12px;width:34px;height:34px;border-radius:999px;border:none;background:var(--sec);color:var(--fg);cursor:pointer;font-size:14px}
+  .nota{text-align:center;font-size:11px;color:var(--muted)}
+  #toast{position:fixed;left:50%;top:16px;transform:translateX(-50%);background:var(--sec);border:1px solid var(--border);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;transition:.3s;pointer-events:none;z-index:10}
+  #toast.show{opacity:1}
+  .flick{display:inline-block;animation:flick 1.6s ease-in-out infinite}
+  @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  @keyframes flick{0%,100%{transform:scale(1) rotate(-3deg)}50%{transform:scale(1.15) rotate(3deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="badge"><span class="flick">🔥</span> SuperMatch</span>
+    <h1>A resposta certa pra <em>qualquer</em> foto.</h1>
+    <p>Manda o story, a foto ou o print da conversa. A IA lê tudo e te entrega o que mandar.</p>
+  </header>
+
+  <div class="tabs">
+    <button data-modo="story" class="on">📷 Story / Foto</button>
+    <button data-modo="conversa">💬 Conversa</button>
+  </div>
+
+  <input type="file" id="arquivo" accept="image/*" hidden>
+  <button class="drop" id="drop" type="button">
+    <span class="ic">🖼️</span>
+    <b id="dica">Manda o story ou foto do crush</b>
+    <small>Toque para escolher da galeria</small>
+  </button>
+  <div class="preview" id="preview">
+    <img id="img" alt="Imagem enviada">
+    <button class="pill" id="remover" style="right:12px;top:12px">✕</button>
+    <button class="pill" id="trocar" style="left:12px;bottom:12px">Trocar imagem</button>
+  </div>
+
+  <textarea id="contexto" rows="2" maxlength="1000" placeholder="Contexto (opcional): ex. a gente se conheceu na festa ontem..."></textarea>
+
+  <div>
+    <div class="label">Nível de ousadia</div>
+    <div class="niveis">
+      <button data-nivel="fofa"><span>😇</span>Fofa</button>
+      <button data-nivel="sapeca"><span>😏</span>Sapeca</button>
+      <button data-nivel="safada" class="on"><span>🔥</span>Safada</button>
+    </div>
+  </div>
+
+  <button class="gerar" id="gerar">✨ Criar reações</button>
+
+  <section id="res">
+    <div class="leitura"><div class="t">O que a IA viu</div><p id="leitura"></p></div>
+    <div id="lista" style="display:flex;flex-direction:column;gap:12px"></div>
+    <button class="outras" id="outras">🔄 Gerar outras</button>
+  </section>
+
+  <p class="nota">As imagens são usadas só para criar as respostas. Use com bom senso 😉</p>
+</div>
+<div id="toast"></div>
+
+<script>
+  const API_URL = location.protocol.startsWith("http") ? "/api/public/cantadas" : "COLOQUE_AQUI_O_ENDERECO/api/public/cantadas";
+
+  const FRASES = ["Analisando cada detalhe...","Esquentando as ideias...","Caprichando na malícia...","Quase pronto, segura o coração..."];
+  const $ = (id) => document.getElementById(id);
+  let modo = "story", nivel = "safada", imagem = null, carregando = false;
+
+  function toast(t){ const el=$("toast"); el.textContent=t; el.classList.add("show"); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove("show"),2200); }
+
+  function atualizar(){
+    document.querySelectorAll("[data-modo]").forEach(b=>b.classList.toggle("on", b.dataset.modo===modo));
+    document.querySelectorAll("[data-nivel]").forEach(b=>b.classList.toggle("on", b.dataset.nivel===nivel));
+    $("dica").textContent = modo==="story" ? "Manda o story ou foto do crush" : "Manda o print da conversa";
+    $("contexto").style.display = modo==="conversa" ? "block" : "none";
+    $("drop").style.display = imagem ? "none" : "flex";
+    $("preview").style.display = imagem ? "block" : "none";
+    if (imagem) $("img").src = imagem;
+    if (!carregando) $("gerar").textContent = modo==="story" ? "✨ Criar reações" : "✨ Criar respostas";
+  }
+  function limparResultado(){ $("res").style.display="none"; }
+
+  function lerImagem(file){
+    return new Promise((ok, erro)=>{
+      const url = URL.createObjectURL(file); const img = new Image();
+      img.onload = ()=>{
+        const e = Math.min(1, 1600/Math.max(img.naturalWidth, img.naturalHeight));
+        const c = document.createElement("canvas");
+        c.width = Math.round(img.naturalWidth*e); c.height = Math.round(img.naturalHeight*e);
+        c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+        URL.revokeObjectURL(url); ok(c.toDataURL("image/jpeg",0.85));
+      };
+      img.onerror = ()=>{ URL.revokeObjectURL(url); erro(new Error("Não consegui abrir essa imagem.")); };
+      img.src = url;
+    });
+  }
+  async function carregar(file){
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return toast("Isso não é uma imagem.");
+    try { imagem = await lerImagem(file); limparResultado(); atualizar(); } catch(e){ toast(e.message); }
+  }
+
+  async function gerar(){
+    if (!imagem){ toast("Primeiro manda uma imagem 📸"); $("arquivo").click(); return; }
+    carregando = true; let i = 0;
+    const btn = $("gerar"); btn.disabled = true; $("outras").disabled = true;
+    btn.innerHTML = '<span class="flick">🔥</span> ' + FRASES[0];
+    const timer = setInterval(()=>{ i=(i+1)%FRASES.length; btn.innerHTML='<span class="flick">🔥</span> '+FRASES[i]; }, 2200);
+    try {
+      const contexto = $("contexto").value.trim();
+      const r = await fetch(API_URL, { method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ modo, nivel, imagem, ...(contexto && modo==="conversa" ? {contexto} : {}) }) });
+      const d = await r.json().catch(()=>({erro:"Resposta inválida do servidor."}));
+      if (!r.ok) throw new Error(d.erro || "Deu ruim. Tenta de novo.");
+      mostrar(d);
+    } catch(e){ toast(e.message || "Deu ruim. Tenta de novo."); }
+    finally { clearInterval(timer); carregando=false; btn.disabled=false; $("outras").disabled=false; atualizar(); }
+  }
+
+  function mostrar(d){
+    $("leitura").textContent = d.leitura;
+    const lista = $("lista"); lista.innerHTML = "";
+    d.respostas.rules?.forEach ? null : d.respostas.forEach((r, idx)=>{
+      const el = document.createElement("div"); el.className="msg"; el.style.animationDelay=(idx+1)*90+"ms";
+      const e = document.createElement("div"); e.className="e"; e.textContent=r.estilo;
+      const p = document.createElement("p"); p.textContent=r.texto;
+      const b = document.createElement("button"); b.textContent="📋"; b.setAttribute("aria-label","Copiar");
+      b.onclick = async ()=>{ try{ await navigator.clipboard.writeText(r.texto); b.textContent="✓"; toast("Copiado! Agora é só mandar 😏"); setTimeout(()=>b.textContent="📋",1800);}catch{ toast("Não deu pra copiar."); } };
+      el.append(e,p,b); lista.append(el);
+    });
+    $("res").style.display="flex";
+    $("res").scrollIntoView({behavior:"smooth", block:"start"});
+  }
+
+  document.querySelectorAll("[data-modo]").forEach(b=>b.onclick=()=>{ modo=b.dataset.modo; limparResultado(); atualizar(); });
+  document.querySelectorAll("[data-nivel]").forEach(b=>b.onclick=()=>{ nivel=b.dataset.nivel; atualizar(); });
+  $("drop").onclick = $("trocar").onclick = ()=>$("arquivo").click();
+  $("arquivo").onchange = (e)=>{ carregar(e.target.files[0]); e.target.value=""; };
+  $("remover").onclick = ()=>{ imagem=null; limparResultado(); atualizar(); };
+  $("drop").ondragover = (e)=>e.preventDefault();
+  $("drop").ondrop = (e)=>{ e.preventDefault(); carregar(e.dataTransfer.files[0]); };
+  window.addEventListener("paste", (e)=>{ const it=[...(e.clipboardData?.items||[])].find(i=>i.type.startsWith("image/")); if(it) carregar(it.getAsFile()); });
+  $("gerar").onclick = gerar; $("outras").onclick = gerar;
+  atualizar();
+</script>
+</body>
+</html>
